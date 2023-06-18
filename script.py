@@ -34,20 +34,102 @@ class DenverUniversityTestCase(unittest.TestCase):
 
         self.addCleanup(self.browser.quit)
 
-    # scrolla ate um botao, verifica se ele esta sendo mostrado, verifica o titulo dele e depois de clicar, verifica se levou ao lugar certo
-    def test_button_click(self):
+    def test_button1(self):
+        # obtem o botao e scrolla a tela ate ele
         button = self.browser.find_element(By.XPATH, '//*[@id="main-content"]/form/div[2]/div[2]/div[1]/button')
-
         actions = ActionChains(self.browser)
         actions.scroll_to_element(button).perform()
         
+        # verifica se o botao esta sendo mostrado, e se o titulo dele condiz com o site
         self.assertTrue(button.is_displayed())
-        self.assertTrue(button.get_attribute('title') == "Search Undergraduate Programs")
-
+        self.assertEqual(button.get_attribute('title'), "Search Undergraduate Programs")
+        
+        # guarda o url de destino e clica no botao
+        data_action = button.get_attribute('data-action')
         button.click()
         time.sleep(2)
 
-        self.assertIn('https://www.du.edu/academics/undergraduate-programs?search=', self.browser.current_url)
+        # verifica se o botao levou ate a url certa
+        self.assertIn(data_action, self.browser.current_url)
+        time.sleep(2)
+
+    def test_button2(self):
+        # obtem o botao com imagem e scrolla a tela ate ele
+        image_button = self.browser.find_element(By.XPATH, '//*[@id="off-canvas-content"]/footer/div[1]/div/div/div/div[3]/a')
+        actions = ActionChains(self.browser)
+        actions.scroll_to_element(image_button).perform()
+
+        # verifica se o botao esta sendo mostrado, e se o titulo dele condiz com o site
+        self.assertTrue(image_button.is_displayed())
+        self.assertEqual(image_button.get_attribute('title'), "Find your program representative and schedule a visit")
+        
+        # obtem a imagem do botao e verifica se ela esta sendo mostrada
+        image = image_button.find_element(By.XPATH, '//*[@id="off-canvas-content"]/footer/div[1]/div/div/div/div[3]/a/img')
+        self.assertTrue(image.is_displayed())
+        time.sleep(2)
+
+        # obtem a url da imagem e abre ela
+        image_link = image.get_attribute('src')
+        self.browser.get(image_link)
+        time.sleep(2)
+
+    def test_topbar(self):
+        # obtem a top bar
+        top_bar = self.browser.find_element(By.XPATH, '//*[@id="top-bar-sticky-wrap"]/div[2]')
+        self.assertTrue(top_bar.is_displayed())
+
+        # obtem a lista com os elements da top bar
+        ul = top_bar.find_element(By.TAG_NAME, 'ul').find_elements(By.XPATH, '*')
+
+        urls = []
+        texts = []
+
+        # para cada elemento da lista de elementos da top bar, salva a href e o texto do elemento
+        for li in ul:
+            self.assertTrue(li.is_displayed())
+
+            a = li.find_element(By.TAG_NAME, 'a')
+            url = a.get_attribute('href')
+            text = a.text
+
+            urls.append(url)
+            texts.append(text)
+
+        # para cada url salva, acessa a mesma e verifica se o titulo da pagina corresponde ao texto do elemento
+        for i in range (len(urls)):
+            self.browser.get(urls[i])
+            time.sleep(1)
+
+            self.assertIn(texts[i], self.browser.title)
+            time.sleep(2)
+
+    def test_submenu(self):
+        random.seed()
+        # avanca a pagina e obtem o submenu e sua lista de elementos (opcoes)
+        self.browser.find_element(By.XPATH, '//*[@id="block-pl-drupal-main-menu"]/ul/li[3]/a').click()
+        submenu = self.browser.find_element(By.XPATH, '//*[@id="sub-menu"]')
+        ul = submenu.find_element(By.TAG_NAME, 'ul').find_elements(By.XPATH, '*')
+
+        # verifica se o submenu esta sendo mostrado
+        self.assertTrue((submenu.is_displayed()))
+
+        # verifica se a ordem do submenu esta de acordo
+        submenu_order = ['Overview', 'Centers & Institutes', 'Health & Wellness', 'Society & Culture', 'Technology & Science', 'In the News', 'About DU Research', 'Research Showcase']
+        for i in range (len(ul)):
+            text = ul[i].find_element(By.TAG_NAME, 'a').text
+            self.assertEqual(text, submenu_order[i])
+
+        # escolhe uma das opcoes aleatoriamente para cliclar
+        idx = random.randint(0, len(ul)-1)
+        ul[idx].find_element(By.TAG_NAME, 'a').click()
+        time.sleep(2)
+
+        # apos o clique, obtem novamente a lista de elementos, e verifica se o elemento clicado esta como ativo
+        ul = self.browser.find_element(By.XPATH, '//*[@id="sub-menu"]').find_element(By.TAG_NAME, 'ul').find_elements(By.XPATH, '*')
+        self.assertTrue(ul[idx].get_attribute('class') == "active")
+
+        # verifica se a url atual condiz com a url da opcao selecionada
+        self.assertIn(ul[idx].find_element(By.TAG_NAME, 'a').get_attribute('href'), self.browser.current_url)
         time.sleep(2)
 
     def test_video_play(self):
