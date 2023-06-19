@@ -128,14 +128,5 @@ class DenverUniversityTestCase(unittest.TestCase):
         #fecha o browser ao final
         self.browser.close()
 
-
-
-
-
-
-        
-        
-
-
 if __name__ == '__main__':
     unittest.main(verbosity=2)
